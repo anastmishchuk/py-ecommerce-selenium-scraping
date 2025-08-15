@@ -62,6 +62,25 @@ logging.basicConfig(
 )
 
 
+def accept_cookies_if_present(driver: WebDriver, timeout: int = 5) -> None:
+    try:
+        button = WebDriverWait(driver, timeout).until(
+            ec.element_to_be_clickable((
+                By.CSS_SELECTOR, "button#accept-cookies, .cookie-accept"
+            ))
+        )
+        if button.is_displayed() and button.is_enabled():
+            logging.info("Clicking 'Accept Cookies' button")
+            button.click()
+            time.sleep(1)
+    except TimeoutException:
+        logging.info("No 'Accept Cookies' button found on this page")
+    except Exception as e:
+        logging.warning(
+            f"Unexpected error while clicking 'Accept Cookies': {e}"
+        )
+
+
 def clean_text(text: str) -> str:
     if not text:
         return ""
@@ -121,6 +140,8 @@ def get_random_products(
     logging.info(f"Start parsing random products from: {url}")
     driver.get(url)
     time.sleep(2)
+    accept_cookies_if_present(driver)
+    time.sleep(1)
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
     products_html = soup.select(".card-body, .thumbnail .caption")
@@ -151,7 +172,9 @@ def product_key(product_html: Tag) -> str:
 def get_products_from_page(url: str, driver: WebDriver) -> list[Product]:
     logging.info(f"Start parsing page: {url}")
     driver.get(url)
-    time.sleep(3)
+    time.sleep(2)
+    accept_cookies_if_present(driver)
+    time.sleep(1)
 
     all_products = []
     seen_keys = set()
